@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>福元管理后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑", sans-serif; }
+        body { background: #fff8e6; min-height: 100vh; }
+
+        /* ========== 登录页 ========== */
+        .login-page {
+            height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #fceabb, #f8b500);
+        }
+        .login-card {
+            background: white; padding: 40px 50px; border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(139, 90, 43, 0.2);
+            width: 380px; text-align: center;
+        }
+        .login-card h1 { color: #8b5a2b; font-size: 24px; margin-bottom: 8px; }
+        .login-card p { color: #a1887f; font-size: 13px; margin-bottom: 30px; }
+        .login-card input {
+            width: 100%; padding: 12px 16px; margin-bottom: 16px;
+            border: 1px solid #f8b500; border-radius: 8px; font-size: 14px;
+            outline: none; transition: border-color 0.2s;
+        }
+        .login-card input:focus { border-color: #8b5a2b; }
+        .login-card button {
+            width: 100%; padding: 12px; background: #f8b500; color: white;
+            border: none; border-radius: 8px; font-size: 15px; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .login-card button:hover { background: #d97634; }
+        .login-error { color: #e53935; font-size: 13px; margin-top: 12px; min-height: 18px; }
+
+        /* ========== 主布局 ========== */
+        .app-header {
+            background: linear-gradient(to right, #fceabb, #f8b500);
+            padding: 16px 30px; display: flex; justify-content: space-between;
+            align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .app-header h1 { color: #8b5a2b; font-size: 20px; }
+        .app-header .user-info { display: flex; gap: 12px; align-items: center; }
+        .app-header .user-info span { color: #8b5a2b; font-size: 14px; }
+        .app-header button {
+            background: #8b5a2b; color: white; border: none; padding: 6px 16px;
+            border-radius: 6px; cursor: pointer; font-size: 13px;
+        }
+        .app-header button:hover { background: #6d4423; }
+
+        .tab-nav {
+            background: white; display: flex; padding: 0 30px;
+            border-bottom: 1px solid #f8b500; overflow-x: auto;
+        }
+        .tab-nav button {
+            padding: 14px 24px; background: none; border: none;
+            color: #a1887f; cursor: pointer; font-size: 14px; font-weight: 500;
+            border-bottom: 3px solid transparent; white-space: nowrap;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .tab-nav button.active { color: #8b5a2b; border-bottom-color: #f8b500; }
+        .tab-nav button:hover { color: #8b5a2b; }
+
+        .tab-content { padding: 30px; max-width: 1100px; margin: 0 auto; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ========== 通用表单 ========== */
+        .card { background: white; border-radius: 12px; padding: 24px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 24px; }
+        .card h2 { color: #8b5a2b; font-size: 18px; margin-bottom: 18px; padding-bottom: 10px;
+                   border-bottom: 2px solid #fceabb; }
+        .form-row { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 200px; }
+        .form-group label { display: block; color: #8b5a2b; font-size: 13px; margin-bottom: 6px; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px 14px; border: 1px solid #e0d5c5; border-radius: 8px;
+            font-size: 14px; outline: none; font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #f8b500; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .btn {
+            padding: 10px 22px; border: none; border-radius: 8px; cursor: pointer;
+            font-size: 14px; font-weight: 500; transition: all 0.2s;
+        }
+        .btn-primary { background: #f8b500; color: white; }
+        .btn-primary:hover { background: #d97634; }
+        .btn-secondary { background: #e0d5c5; color: #5d4037; }
+        .btn-secondary:hover { background: #d4c6b4; }
+        .btn-danger { background: #e53935; color: white; }
+        .btn-danger:hover { background: #c62828; }
+        .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+        /* ========== 列表 ========== */
+        .list-item {
+            background: white; border-radius: 10px; padding: 18px 20px; margin-bottom: 14px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04); border-left: 4px solid #f8b500;
+        }
+        .list-item-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px; flex-wrap: wrap; gap: 8px;
+        }
+        .list-item-title { color: #8b5a2b; font-size: 16px; font-weight: 600; }
+        .list-item-meta { color: #a1887f; font-size: 12px; }
+        .list-item-content { color: #5d4037; font-size: 14px; line-height: 1.7; margin-bottom: 10px; }
+        .list-item-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .badge {
+            display: inline-block; padding: 2px 10px; border-radius: 10px;
+            font-size: 12px; margin-right: 8px;
+        }
+        .badge-pending { background: #fff3e0; color: #e65100; }
+        .badge-approved { background: #e8f5e9; color: #2e7d32; }
+        .badge-rejected { background: #ffebee; color: #c62828; }
+
+        /* ========== 照片管理 ========== */
+        .photo-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 14px;
+        }
+        .photo-grid .photo-item {
+            background: white; border-radius: 10px; overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .photo-grid img { width: 100%; height: 140px; object-fit: cover; display: block; }
+        .photo-grid .photo-info { padding: 8px 12px; font-size: 12px; color: #5d4037; }
+        .photo-grid .photo-info .caption { font-weight: 500; color: #8b5a2b; }
+        .upload-area {
+            border: 2px dashed #f8b500; border-radius: 12px; padding: 30px;
+            text-align: center; background: #fffaf0; margin-bottom: 20px;
+        }
+        .upload-area input[type="file"] { display: none; }
+        .upload-area label {
+            cursor: pointer; color: #8b5a2b; font-size: 14px;
+            display: inline-block; padding: 10px 24px; background: #fceabb; border-radius: 8px;
+        }
+        .upload-area label:hover { background: #f8b500; color: white; }
+        .upload-area p { color: #a1887f; font-size: 12px; margin-top: 10px; }
+
+        .empty { text-align: center; color: #a1887f; padding: 40px; }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 768px) {
+            .login-card { padding: 30px 24px; width: 90%; max-width: 360px; }
+            .app-header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+            .app-header h1 { font-size: 16px; }
+            .user-info { font-size: 13px; }
+            .tab-nav { padding: 0 10px; flex-wrap: wrap; overflow-x: visible; }
+            .tab-nav button { padding: 10px 12px; font-size: 13px; flex: 1; min-width: 70px; }
+            .tab-content { padding: 16px 12px; }
+            .card { padding: 16px; margin-bottom: 14px; }
+            .card h2 { font-size: 17px; margin-bottom: 14px; }
+            .form-row { flex-direction: column; gap: 0; }
+            .form-group { min-width: unset; margin-bottom: 12px; }
+            .btn { padding: 10px 16px; font-size: 14px; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==================== 登录页 ==================== -->
+<div id="loginPage" class="login-page">
+    <div class="login-card">
+        <h1>🐱 福元管理后台</h1>
+        <p>输入管理员账号登录</p>
+        <input id="loginUser" type="text" placeholder="用户名（admin）" value="admin">
+        <input id="loginPwd" type="password" placeholder="密码（123456）" value="123456">
+        <button onclick="doLogin()">登 录</button>
+        <div id="loginErr" class="login-error"></div>
+    </div>
+</div>
+
+<!-- ==================== 主界面 ==================== -->
+<div id="app" style="display:none;">
+    <header class="app-header">
+        <h1>🐱 福元管理后台</h1>
+        <div class="user-info">
+            <span id="welcomeUser"></span>
+            <button onclick="logout()">退出登录</button>
+        </div>
+    </header>
+
+    <nav class="tab-nav">
+        <button data-tab="pet" class="active" onclick="switchTab('pet')">🐱 档案编辑</button>
+        <button data-tab="diary" onclick="switchTab('diary')">📖 日记管理</button>
+        <button data-tab="photo" onclick="switchTab('photo')">📷 照片管理</button>
+        <button data-tab="comment" onclick="switchTab('comment')">💌 留言审核</button>
+    </nav>
+
+    <div class="tab-content">
+
+        <!-- ===== 档案编辑 ===== -->
+        <div id="tab-pet" class="tab-panel active">
+            <div class="card">
+                <h2>编辑福元档案</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>名字</label>
+                        <input id="p-name">
+                    </div>
+                    <div class="form-group">
+                        <label>品种</label>
+                        <input id="p-breed">
+                    </div>
+                    <div class="form-group">
+                        <label>性别</label>
+                        <select id="p-gender">
+                            <option value="公">公</option>
+                            <option value="母">母</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>生日</label>
+                        <input id="p-birthday" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label>到家日期</label>
+                        <input id="p-arrival" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label>头像 URL</label>
+                        <input id="p-avatar" placeholder="/images/xxx.jpg">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>性格</label>
+                        <input id="p-personality" placeholder="温顺、亲人...">
+                    </div>
+                    <div class="form-group">
+                        <label>喜好</label>
+                        <input id="p-hobbies" placeholder="冻干、晒太阳...">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>简介</label>
+                        <textarea id="p-description" rows="3"></textarea>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="savePet()">💾 保存档案</button>
+                <span id="petMsg" style="margin-left:12px;color:#2e7d32;font-size:13px;"></span>
+            </div>
+        </div>
+
+        <!-- ===== 日记管理 ===== -->
+        <div id="tab-diary" class="tab-panel">
+            <div class="card">
+                <h2>新增日记</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>标题</label>
+                        <input id="d-title" placeholder="例如：福元的第一天">
+                    </div>
+                    <div class="form-group">
+                        <label>类型</label>
+                        <select id="d-type">
+                            <option value="日常">日常</option>
+                            <option value="重要时刻">重要时刻</option>
+                            <option value="生日">生日</option>
+                            <option value="健康">健康</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>日期</label>
+                        <input id="d-date" type="date">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>内容</label>
+                        <textarea id="d-content" rows="3"></textarea>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="addDiary()">➕ 添加日记</button>
+            </div>
+
+            <div class="card">
+                <h2>日记列表</h2>
+                <div id="diaryList"></div>
+            </div>
+        </div>
+
+        <!-- ===== 照片管理 ===== -->
+        <div id="tab-photo" class="tab-panel">
+            <div class="card">
+                <h2>上传新照片</h2>
+                <div class="upload-area">
+                    <label for="photoFile">📁 点击选择照片</label>
+                    <input id="photoFile" type="file" accept="image/*" multiple onchange="previewFiles(this)">
+                    <p>支持 JPG/PNG/GIF，单张最大 10MB</p>
+                </div>
+                <div id="uploadPreview" style="margin-bottom:14px;"></div>
+                <button class="btn btn-primary" onclick="uploadPhotos()" id="uploadBtn" disabled>⬆️ 开始上传</button>
+                <span id="uploadMsg" style="margin-left:12px;color:#2e7d32;font-size:13px;"></span>
+            </div>
+
+            <div class="card">
+                <h2>已有照片（点击删除）</h2>
+                <div id="photoGrid" class="photo-grid"></div>
+            </div>
+        </div>
+
+        <!-- ===== 留言审核 ===== -->
+        <div id="tab-comment" class="tab-panel">
+            <div class="card">
+                <h2>⏳ 待审核留言 <span id="pendingCount" style="color:#e65100;font-size:14px;"></span></h2>
+                <div id="pendingList"></div>
+            </div>
+            <div class="card">
+                <h2>✅ 已通过留言</h2>
+                <div id="approvedList"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+let token = null;
+let photoQueue = [];
+
+function doLogin() {
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPwd').value.trim();
+    if (!u || !p) { document.getElementById('loginErr').innerText = '请输入用户名和密码'; return; }
+    fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+    }).then(r => r.json()).then(res => {
+        if (res.code === 200) {
+            token = res.data.token;
+            localStorage.setItem('fuyuan_token', token);
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            document.getElementById('welcomeUser').innerText = '👤 ' + res.data.username;
+            loadPet(); loadDiaries(); loadPhotos(); loadComments();
+        } else {
+            document.getElementById('loginErr').innerText = res.msg || '登录失败';
+        }
+    }).catch(() => document.getElementById('loginErr').innerText = '网络错误');
+}
+
+function logout() {
+    token = null; localStorage.removeItem('fuyuan_token');
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('loginPage').style.display = 'flex';
+}
+
+function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    document.querySelector('.tab-nav button[data-tab="' + name + '"]').classList.add('active');
+    if (name === 'pet') loadPet();
+    if (name === 'diary') loadDiaries();
+    if (name === 'photo') loadPhotos();
+    if (name === 'comment') loadComments();
+}
+
+// ========== 档案 ==========
+function loadPet() {
+    fetch('/api/pets').then(r => r.json()).then(res => {
+        if (res.code === 200 && res.data.length) {
+            const p = res.data[0];
+            document.getElementById('p-name').value = p.name || '';
+            document.getElementById('p-breed').value = p.breed || '';
+            document.getElementById('p-gender').value = p.gender || '公';
+            document.getElementById('p-birthday').value = p.birthday || '';
+            document.getElementById('p-arrival').value = p.arrivalDate || '';
+            document.getElementById('p-avatar').value = p.avatarUrl || '';
+            document.getElementById('p-personality').value = p.personality || '';
+            document.getElementById('p-hobbies').value = p.hobbies || '';
+            document.getElementById('p-description').value = p.description || '';
+            document.getElementById('p-name').dataset.id = p.id;
+        }
+    });
+}
+
+function savePet() {
+    const id = document.getElementById('p-name').dataset.id;
+    const data = {
+        name: document.getElementById('p-name').value,
+        breed: document.getElementById('p-breed').value,
+        gender: document.getElementById('p-gender').value,
+        birthday: document.getElementById('p-birthday').value,
+        arrivalDate: document.getElementById('p-arrival').value,
+        avatarUrl: document.getElementById('p-avatar').value,
+        personality: document.getElementById('p-personality').value,
+        hobbies: document.getElementById('p-hobbies').value,
+        description: document.getElementById('p-description').value
+    };
+    fetch('/api/pets/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(r => r.json()).then(res => {
+        const msg = document.getElementById('petMsg');
+        if (res.code === 200) { msg.innerText = '✓ 保存成功'; msg.style.color = '#2e7d32'; }
+        else { msg.innerText = '✗ ' + (res.msg || '保存失败'); msg.style.color = '#e53935'; }
+        setTimeout(() => msg.innerText = '', 2500);
+    });
+}
+
+// ========== 日记 ==========
+function addDiary() {
+    const data = {
+        petId: 1,
+        title: document.getElementById('d-title').value,
+        diaryType: document.getElementById('d-type').value,
+        eventDate: document.getElementById('d-date').value,
+        content: document.getElementById('d-content').value
+    };
+    if (!data.title || !data.eventDate) { alert('标题和日期必填'); return; }
+    fetch('/api/diaries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(r => r.json()).then(res => {
+        if (res.code === 200) {
+            document.getElementById('d-title').value = '';
+            document.getElementById('d-content').value = '';
+            loadDiaries();
+        } else { alert('添加失败: ' + res.msg); }
+    });
+}
+
+function deleteDiary(id) {
+    if (!confirm('确定删除这篇日记？')) return;
+    fetch('/api/diaries/' + id, { method: 'DELETE' }).then(() => loadDiaries());
+}
+
+function editDiary(id) {
+    const li = document.getElementById('diary-' + id);
+    const title = prompt('标题', li.dataset.title);
+    if (title === null) return;
+    const content = prompt('内容', li.dataset.content);
+    if (content === null) return;
+    const diaryType = prompt('类型', li.dataset.type) || '日常';
+    const eventDate = prompt('日期 (YYYY-MM-DD)', li.dataset.date) || '';
+    fetch('/api/diaries/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, petId: 1, title, content, diaryType, eventDate })
+    }).then(r => r.json()).then(res => {
+        if (res.code === 200) loadDiaries(); else alert('更新失败: ' + res.msg);
+    });
+}
+
+function loadDiaries() {
+    fetch('/api/diaries').then(r => r.json()).then(res => {
+        const box = document.getElementById('diaryList');
+        if (res.code !== 200 || !res.data.length) { box.innerHTML = '<div class="empty">暂无日记</div>'; return; }
+        box.innerHTML = res.data.map(d => `
+            <div class="list-item" id="diary-${d.id}" data-title="${d.title}" data-content="${d.content||''}" data-type="${d.diaryType||''}" data-date="${d.eventDate||''}">
+                <div class="list-item-header">
+                    <div>
+                        <span class="list-item-title">${d.title}</span>
+                        <span class="list-item-meta">　${d.eventDate||''}　·　${d.diaryType||''}</span>
+                    </div>
+                    <div class="list-item-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="editDiary(${d.id})">✏️ 编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteDiary(${d.id})">🗑 删除</button>
+                    </div>
+                </div>
+                <div class="list-item-content">${d.content||''}</div>
+            </div>
+        `).join('');
+    });
+}
+
+// ========== 照片 ==========
+function previewFiles(input) {
+    const files = Array.from(input.files);
+    photoQueue = files;
+    const box = document.getElementById('uploadPreview');
+    box.innerHTML = files.map((f, i) => {
+        const url = URL.createObjectURL(f);
+        return `<img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;margin:4px;border:1px solid #fceabb;">`;
+    }).join('');
+    document.getElementById('uploadBtn').disabled = files.length === 0;
+}
+
+function uploadPhotos() {
+    if (!photoQueue.length) return;
+    const btn = document.getElementById('uploadBtn');
+    const msg = document.getElementById('uploadMsg');
+    btn.disabled = true; msg.innerText = '上传中...'; msg.style.color = '#8b5a2b';
+    let done = 0, total = photoQueue.length;
+    photoQueue.forEach(file => {
+        const fd = new FormData();
+        fd.append('file', file);
+        fetch('/api/photos/upload', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(res => {
+                if (res.code === 200) {
+                    fetch('/api/photos', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ petId: 1, imageUrl: res.data.url, caption: '上传于 ' + new Date().toLocaleDateString(), category: '日常', takenAt: new Date().toISOString().slice(0,10) })
+                    });
+                }
+                done++;
+                if (done === total) {
+                    msg.innerText = '✓ 上传完成 ' + total + ' 张';
+                    msg.style.color = '#2e7d32';
+                    photoQueue = []; document.getElementById('photoFile').value = '';
+                    document.getElementById('uploadPreview').innerHTML = '';
+                    setTimeout(() => { msg.innerText = ''; btn.disabled = true; loadPhotos(); }, 2500);
+                }
+            })
+            .catch(() => { done++; if (done === total) loadPhotos(); });
+    });
+}
+
+function deletePhoto(id) {
+    if (!confirm('确定删除这张照片？')) return;
+    fetch('/api/photos/' + id, { method: 'DELETE' }).then(() => loadPhotos());
+}
+
+function loadPhotos() {
+    fetch('/api/photos').then(r => r.json()).then(res => {
+        const box = document.getElementById('photoGrid');
+        if (res.code !== 200 || !res.data.length) { box.innerHTML = '<div class="empty">暂无照片</div>'; return; }
+        box.innerHTML = res.data.map(p => `
+            <div class="photo-item">
+                <img src="${p.imageUrl}" alt="${p.caption}" onerror="this.style.opacity='0.3'">
+                <div class="photo-info">
+                    <div class="caption">${p.caption||''}</div>
+                    <div>${p.takenAt||''} · ${p.category||''}</div>
+                    <button class="btn btn-danger btn-sm" style="margin-top:6px;padding:4px 10px;" onclick="deletePhoto(${p.id})">🗑 删除</button>
+                </div>
+            </div>
+        `).join('');
+    });
+}
+
+// ========== 留言 ==========
+function approveComment(id) {
+    fetch('/api/comments/' + id + '/approve', { method: 'PUT' }).then(() => loadComments());
+}
+function rejectComment(id) {
+    fetch('/api/comments/' + id + '/reject', { method: 'PUT' }).then(() => loadComments());
+}
+function deleteComment(id) {
+    if (!confirm('确定删除这条留言？')) return;
+    fetch('/api/comments/' + id, { method: 'DELETE' }).then(() => loadComments());
+}
+
+function renderCommentItem(c, showActions) {
+    const statusBadge = c.status === 0 ? '<span class="badge badge-pending">待审核</span>'
+                      : c.status === 1 ? '<span class="badge badge-approved">已通过</span>'
+                      : '<span class="badge badge-rejected">已拒绝</span>';
+    return `
+        <div class="list-item">
+            <div class="list-item-header">
+                <div>
+                    <span class="list-item-title">💬 ${c.nickname||'匿名'}</span>
+                    <span class="list-item-meta">　${c.createdAt||''}</span>
+                    ${statusBadge}
+                </div>
+                ${showActions ? `<div class="list-item-actions">
+                    ${c.status === 0 ? `<button class="btn btn-primary btn-sm" onclick="approveComment(${c.id})">✓ 通过</button>
+                    <button class="btn btn-secondary btn-sm" onclick="rejectComment(${c.id})">✗ 拒绝</button>` : ''}
+                    <button class="btn btn-danger btn-sm" onclick="deleteComment(${c.id})">🗑 删除</button>
+                </div>` : ''}
+            </div>
+            <div class="list-item-content">${c.content||''}</div>
+        </div>
+    `;
+}
+
+function loadComments() {
+    fetch('/api/comments/pending').then(r => r.json()).then(res => {
+        const box = document.getElementById('pendingList');
+        if (res.code === 200 && res.data.length) {
+            document.getElementById('pendingCount').innerText = '(' + res.data.length + ' 条)';
+            box.innerHTML = res.data.map(c => renderCommentItem(c, true)).join('');
+        } else {
+            document.getElementById('pendingCount').innerText = '';
+            box.innerHTML = '<div class="empty">没有待审核留言 🎉</div>';
+        }
+    });
+    fetch('/api/comments').then(r => r.json()).then(res => {
+        const box = document.getElementById('approvedList');
+        if (res.code === 200 && res.data.length) {
+            box.innerHTML = res.data.map(c => renderCommentItem(c, true)).join('');
+        } else {
+            box.innerHTML = '<div class="empty">暂无通过的留言</div>';
+        }
+    });
+}
+
+// ========== 自动登录 ==========
+window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('fuyuan_token');
+    if (saved) {
+        token = saved;
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        document.getElementById('welcomeUser').innerText = '👤 admin';
+        loadPet(); loadDiaries(); loadPhotos(); loadComments();
+    }
+});
+</script>
+</body>
+</html>

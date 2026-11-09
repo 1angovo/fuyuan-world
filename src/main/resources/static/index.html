@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>福元的世界 - 宠物档案与成长记录</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑", sans-serif; }
+        .header-banner {
+            position: relative; height: 250px;
+            background: linear-gradient(to right,#fceabb,#f8b500);
+            background-image: url("images/fuyuan3.jpg");
+            background-size: cover; background-position: center;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .banner-title {
+            color: white; font-size: 28px; font-weight: bold;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.6); z-index: 1;
+        }
+        .navbar {
+            background-color: #fceabb; padding: 15px 0; text-align: center;
+            border-bottom: 1px solid #f8b500;
+        }
+        .navbar a {
+            text-decoration: none; color: #8b5a2b; margin: 0 15px;
+            font-size: 15px; font-weight: 500;
+        }
+        .navbar a:hover { color: #d97634; }
+        .main-content { background-color: #fff8e6; padding: 40px 10%; }
+        .section-title {
+            text-align: center; color: #8b5a2b; font-size: 24px; margin-bottom: 30px;
+            position: relative;
+        }
+        .section-title::after {
+            content: ""; position: absolute; bottom: -10px; left: 50%;
+            transform: translateX(-50%); width: 60px; height: 3px;
+            background-color: #f8b500;
+        }
+        .profile-card {
+            display: flex; gap: 30px; background: white; border-radius: 12px;
+            padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            max-width: 900px; margin: 0 auto; flex-wrap: wrap;
+        }
+        .profile-avatar {
+            width: 240px; height: 240px; border-radius: 12px;
+            object-fit: cover; flex-shrink: 0;
+        }
+        .profile-info { flex: 1; min-width: 280px; }
+        .profile-info h2 { color: #8b5a2b; font-size: 26px; margin-bottom: 15px; }
+        .info-row { margin-bottom: 12px; font-size: 15px; color: #5d4037; line-height: 1.8; }
+        .info-row span.label { font-weight: bold; color: #8b5a2b; }
+        .profile-desc { margin-top: 20px; color: #5d4037; line-height: 1.8; font-size: 14px; }
+        .quick-links {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px; max-width: 900px; margin: 40px auto 0;
+        }
+        .quick-link-card {
+            background: white; border-radius: 10px; padding: 20px; text-align: center;
+            text-decoration: none; color: #8b5a2b; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .quick-link-card:hover {
+            transform: translateY(-4px); box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        }
+        .quick-link-card h3 { font-size: 17px; margin-bottom: 6px; }
+        .quick-link-card p { font-size: 13px; color: #a1887f; }
+        .footer {
+            background-color: #8b5a2b; color: white; text-align: center;
+            padding: 15px 0; font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .header-banner { height: 180px; }
+            .banner-title { font-size: 22px; }
+            .navbar { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; padding: 12px 10px; }
+            .navbar a { margin: 0; font-size: 13px; }
+            .main-content { padding: 20px 5%; }
+            .profile-card { flex-direction: column; align-items: center; padding: 20px; gap: 20px; }
+            .profile-avatar { width: 180px; height: 180px; }
+            .profile-info { min-width: unset; text-align: center; }
+            .profile-info h2 { font-size: 22px; }
+            .quick-links { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 24px; }
+            .quick-link-card { padding: 16px 10px; }
+            .section-title { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header-banner">
+        <h1 class="banner-title">欢迎来到福元的世界</h1>
+    </header>
+
+    <nav class="navbar">
+        <a href="index.html">首页</a>
+        <a href="diary.html">成长日记</a>
+        <a href="photo.html">照片相册</a>
+        <a href="timeline.html">时间轴</a>
+        <a href="message.html">留言板</a>
+    </nav>
+
+    <main class="main-content">
+        <h2 class="section-title">认识福元</h2>
+        <div class="profile-card" id="profile-card">
+            <img class="profile-avatar" id="pet-avatar" src="images/fuyuan1.jpg" alt="福元">
+            <div class="profile-info">
+                <h2 id="pet-name">加载中...</h2>
+                <div id="pet-info"></div>
+                <p class="profile-desc" id="pet-desc"></p>
+            </div>
+        </div>
+
+        <div class="quick-links">
+            <a href="diary.html" class="quick-link-card">
+                <h3>📖 成长日记</h3>
+                <p id="diary-count">查看日记</p>
+            </a>
+            <a href="photo.html" class="quick-link-card">
+                <h3>📷 照片相册</h3>
+                <p id="photo-count">浏览照片</p>
+            </a>
+            <a href="timeline.html" class="quick-link-card">
+                <h3>⏰ 时间轴</h3>
+                <p>福元的重要时刻</p>
+            </a>
+            <a href="message.html" class="quick-link-card">
+                <h3>💌 留言板</h3>
+                <p id="comment-count">访客留言</p>
+            </a>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>| 福元的世界 - 宠物档案与成长记录平台 |</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/pets').then(r => r.json()).then(res => {
+                if (res.code === 200 && res.data.length > 0) {
+                    const pet = res.data[0];
+                    document.getElementById('pet-name').innerText = pet.name || '福元';
+                    if (pet.avatarUrl) {
+                        document.getElementById('pet-avatar').src = pet.avatarUrl;
+                    }
+                    const info = document.getElementById('pet-info');
+                    let html = '';
+                    if (pet.breed) html += `<div class="info-row"><span class="label">品种：</span>${pet.breed}</div>`;
+                    if (pet.gender) html += `<div class="info-row"><span class="label">性别：</span>${pet.gender}</div>`;
+                    if (pet.birthday) html += `<div class="info-row"><span class="label">生日：</span>${pet.birthday}</div>`;
+                    if (pet.arrivalDate) html += `<div class="info-row"><span class="label">到家日期：</span>${pet.arrivalDate}</div>`;
+                    if (pet.personality) html += `<div class="info-row"><span class="label">性格：</span>${pet.personality}</div>`;
+                    if (pet.hobbies) html += `<div class="info-row"><span class="label">喜好：</span>${pet.hobbies}</div>`;
+                    info.innerHTML = html;
+                    document.getElementById('pet-desc').innerText = pet.description || '';
+                }
+            }).catch(err => console.error('获取宠物失败:', err));
+
+            fetch('/api/diaries').then(r => r.json()).then(res => {
+                if (res.code === 200) document.getElementById('diary-count').innerText = res.data.length + ' 篇日记';
+            }).catch(() => {});
+
+            fetch('/api/photos').then(r => r.json()).then(res => {
+                if (res.code === 200) document.getElementById('photo-count').innerText = res.data.length + ' 张照片';
+            }).catch(() => {});
+
+            fetch('/api/comments').then(r => r.json()).then(res => {
+                if (res.code === 200) document.getElementById('comment-count').innerText = res.data.length + ' 条留言';
+            }).catch(() => {});
+        });
+    </script>
+</body>
+</html>

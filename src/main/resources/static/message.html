@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>留言板 - 福元的世界</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑", sans-serif; }
+        .header-banner {
+            height: 200px; background: linear-gradient(to right,#fceabb,#f8b500);
+            background-image: url("images/fuyuan3.jpg"); background-size: cover;
+            background-position: center; display: flex; align-items: center; justify-content: center;
+        }
+        .banner-title { color: white; font-size: 26px; font-weight: bold; text-shadow: 0 2px 6px rgba(0,0,0,0.6); }
+        .navbar { background-color: #fceabb; padding: 15px 0; text-align: center; border-bottom: 1px solid #f8b500; }
+        .navbar a { text-decoration: none; color: #8b5a2b; margin: 0 15px; font-size: 15px; font-weight: 500; }
+        .navbar a:hover { color: #d97634; }
+        .main-content { background-color: #fff8e6; padding: 40px 10%; min-height: 500px; }
+        .section-title { text-align: center; color: #8b5a2b; font-size: 24px; margin-bottom: 30px; position: relative; }
+        .section-title::after { content: ""; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 60px; height: 3px; background-color: #f8b500; }
+
+        .poem-card {
+            max-width: 500px; margin: 0 auto 40px; background: linear-gradient(135deg, #fff8e1, #ffecb3);
+            border-radius: 16px; padding: 30px 24px; text-align: center;
+            box-shadow: 0 4px 20px rgba(248, 181, 0, 0.2);
+            border: 1px solid #fceabb;
+        }
+        .poem-card .poem-title { color: #d97634; font-size: 22px; font-weight: bold; margin-bottom: 16px; }
+        .poem-card .poem-content {
+            color: #5d4037; font-size: 16px; line-height: 2.2; white-space: pre-wrap;
+            font-family: "楷体", "STKaiti", serif;
+        }
+        .poem-card .poem-author { color: #a1887f; font-size: 13px; margin-top: 12px; }
+
+        .container { max-width: 900px; margin: 0 auto; display: flex; gap: 30px; flex-wrap: wrap; }
+        .comment-form {
+            flex: 0 0 320px; background: white; border-radius: 10px; padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); height: fit-content;
+        }
+        .comment-form h3 { color: #8b5a2b; margin-bottom: 15px; font-size: 18px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; color: #8b5a2b; margin-bottom: 5px; font-size: 14px; }
+        .form-group input, .form-group textarea {
+            width: 100%; padding: 9px 12px; border: 1px solid #fceabb; border-radius: 5px;
+            font-size: 14px; font-family: inherit;
+        }
+        .form-group textarea { height: 110px; resize: vertical; }
+        .submit-btn {
+            background: #f8b500; color: white; border: none; padding: 10px 24px;
+            border-radius: 5px; cursor: pointer; font-size: 14px; width: 100%;
+        }
+        .submit-btn:hover { background: #e6a500; }
+        .hint { font-size: 12px; color: #a1887f; margin-top: 10px; text-align: center; }
+
+        .comment-list { flex: 1; min-width: 280px; }
+        .comment-item {
+            background: white; border-radius: 10px; padding: 18px 22px; margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .comment-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .comment-nick { font-weight: bold; color: #8b5a2b; }
+        .comment-time { font-size: 12px; color: #a1887f; }
+        .comment-content { color: #5d4037; line-height: 1.7; font-size: 14px; white-space: pre-wrap; }
+        .empty { text-align: center; color: #a1887f; padding: 60px; background: white; border-radius: 10px; }
+        .footer { background-color: #8b5a2b; color: white; text-align: center; padding: 15px 0; font-size: 14px; }
+        @media (max-width: 768px) {
+            .header-banner { height: 160px; }
+            .banner-title { font-size: 20px; }
+            .navbar { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; padding: 12px 10px; }
+            .navbar a { margin: 0; font-size: 13px; }
+            .main-content { padding: 20px 5%; }
+            .section-title { font-size: 20px; }
+            .poem-card { padding: 22px 18px; margin-bottom: 24px; }
+            .poem-card .poem-title { font-size: 18px; }
+            .poem-card .poem-content { font-size: 15px; line-height: 2; }
+            .container { flex-direction: column; }
+            .comment-form { flex: 1; }
+            .comment-item { padding: 16px 14px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header-banner"><h1 class="banner-title">给福元留言</h1></header>
+    <nav class="navbar">
+        <a href="index.html">首页</a>
+        <a href="diary.html">成长日记</a>
+        <a href="photo.html">照片相册</a>
+        <a href="timeline.html">时间轴</a>
+        <a href="message.html">留言板</a>
+    </nav>
+    <main class="main-content">
+        <h2 class="section-title">💌 访客留言</h2>
+        <div class="poem-card">
+            <div class="poem-title">🐱 肥猫之诗</div>
+            <div class="poem-content">远看大肥猫，
+近看肥猫大。
+肥猫真是大，
+真是大肥猫。</div>
+            <div class="poem-author">—— 小琰 赠</div>
+        </div>
+        <div class="container">
+            <div class="comment-form">
+                <h3>写下你的留言</h3>
+                <div class="form-group">
+                    <label>昵称</label>
+                    <input type="text" id="nickname" placeholder="你的名字" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>留言内容</label>
+                    <textarea id="content" placeholder="对福元说点什么吧..." maxlength="500"></textarea>
+                </div>
+                <button class="submit-btn" id="submit-btn">提交留言</button>
+                <p class="hint">留言提交后需管理员审核才会显示</p>
+            </div>
+            <div class="comment-list" id="comment-list">加载中...</div>
+        </div>
+    </main>
+    <footer class="footer"><p>| 福元的世界 |</p></footer>
+    <script>
+        function loadComments() {
+            fetch('/api/comments').then(r => r.json()).then(res => {
+                const box = document.getElementById('comment-list');
+                if (res.code !== 200 || !res.data || !res.data.length) {
+                    box.innerHTML = '<div class="empty">暂无留言，快来当第一个留言的人吧！</div>'; return;
+                }
+                box.innerHTML = res.data.map(c => `
+                    <div class="comment-item">
+                        <div class="comment-header">
+                            <span class="comment-nick">🐱 ${c.nickname}</span>
+                            <span class="comment-time">${formatTime(c.createdAt)}</span>
+                        </div>
+                        <div class="comment-content">${c.content}</div>
+                    </div>
+                `).join('');
+            }).catch(err => { document.getElementById('comment-list').innerText = '加载失败'; console.error(err); });
+        }
+
+        function formatTime(t) {
+            if (!t) return '';
+            return t.replace('T', ' ').substring(0, 16);
+        }
+
+        document.getElementById('submit-btn').addEventListener('click', function() {
+            const nickname = document.getElementById('nickname').value.trim();
+            const content = document.getElementById('content').value.trim();
+            if (!nickname || !content) { alert('请填写昵称和留言内容'); return; }
+
+            fetch('/api/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nickname, content })
+            }).then(r => r.json()).then(res => {
+                if (res.code === 200) {
+                    alert('留言已提交！等待管理员审核后会显示在留言板上。');
+                    document.getElementById('nickname').value = '';
+                    document.getElementById('content').value = '';
+                } else {
+                    alert('提交失败: ' + res.msg);
+                }
+            }).catch(err => { alert('网络错误'); console.error(err); });
+        });
+
+        document.addEventListener('DOMContentLoaded', loadComments);
+    </script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>照片相册 - 福元的世界</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑", sans-serif; }
+        .header-banner {
+            height: 200px; background: linear-gradient(to right,#fceabb,#f8b500);
+            background-image: url("images/fuyuan3.jpg"); background-size: cover;
+            background-position: center; display: flex; align-items: center; justify-content: center;
+        }
+        .banner-title { color: white; font-size: 26px; font-weight: bold; text-shadow: 0 2px 6px rgba(0,0,0,0.6); }
+        .navbar { background-color: #fceabb; padding: 15px 0; text-align: center; border-bottom: 1px solid #f8b500; }
+        .navbar a { text-decoration: none; color: #8b5a2b; margin: 0 15px; font-size: 15px; font-weight: 500; }
+        .navbar a:hover { color: #d97634; }
+        .main-content { background-color: #fff8e6; padding: 40px 10%; min-height: 500px; }
+        .section-title { text-align: center; color: #8b5a2b; font-size: 24px; margin-bottom: 20px; position: relative; }
+        .section-title::after { content: ""; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 60px; height: 3px; background-color: #f8b500; }
+        .filter-bar { text-align: center; margin-bottom: 30px; }
+        .filter-bar button {
+            background: white; color: #8b5a2b; border: 1px solid #f8b500; padding: 6px 18px;
+            border-radius: 20px; cursor: pointer; margin: 0 5px; font-size: 14px;
+        }
+        .filter-bar button.active { background: #f8b500; color: white; }
+        .photo-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px; max-width: 1200px; margin: 0 auto;
+        }
+        .photo-item {
+            background: white; border-radius: 10px; overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .photo-item:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+        .photo-item img { width: 100%; height: 200px; object-fit: cover; }
+        .photo-caption { padding: 10px 12px; font-size: 13px; color: #5d4037; text-align: center; }
+        .photo-date { font-size: 12px; color: #a1887f; text-align: center; }
+        .empty { text-align: center; color: #a1887f; padding: 60px; }
+        .footer { background-color: #8b5a2b; color: white; text-align: center; padding: 15px 0; font-size: 14px; }
+        @media (max-width: 768px) {
+            .header-banner { height: 160px; }
+            .banner-title { font-size: 20px; }
+            .navbar { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; padding: 12px 10px; }
+            .navbar a { margin: 0; font-size: 13px; }
+            .main-content { padding: 20px 5%; }
+            .photo-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+            .photo-item img { height: 140px; }
+            .section-title { font-size: 20px; }
+            .filter-bar button { padding: 5px 12px; font-size: 13px; margin: 3px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header-banner"><h1 class="banner-title">福元的照片相册</h1></header>
+    <nav class="navbar">
+        <a href="index.html">首页</a>
+        <a href="diary.html">成长日记</a>
+        <a href="photo.html">照片相册</a>
+        <a href="timeline.html">时间轴</a>
+        <a href="message.html">留言板</a>
+    </nav>
+    <main class="main-content">
+        <h2 class="section-title">📷 日常瞬间</h2>
+        <div class="filter-bar" id="filter-bar"><button class="active" data-cat="">全部</button></div>
+        <div class="photo-grid" id="photo-grid">加载中...</div>
+    </main>
+    <footer class="footer"><p>| 福元的世界 |</p></footer>
+    <script>
+        let currentCat = '';
+        const staticImages = [
+            { url: '/images/richang1.jpg', caption: '日常照片 1', date: '', category: '日常' },
+            { url: '/images/richang2.jpg', caption: '日常照片 2', date: '', category: '日常' },
+            { url: '/images/richang3.jpg', caption: '日常照片 3', date: '', category: '日常' },
+            { url: '/images/richang4.jpg', caption: '日常照片 4', date: '', category: '日常' },
+            { url: '/images/richang5.jpg', caption: '日常照片 5', date: '', category: '日常' },
+            { url: '/images/richang6.jpg', caption: '日常照片 6', date: '', category: '日常' },
+            { url: '/images/richang7.jpg', caption: '日常照片 7', date: '', category: '日常' },
+            { url: '/images/richang8.jpg', caption: '日常照片 8', date: '', category: '日常' },
+            { url: '/images/richang9.jpg', caption: '日常照片 9', date: '', category: '日常' }
+        ];
+
+        function loadPhotos() {
+            fetch('/api/photos' + (currentCat ? '?category=' + encodeURIComponent(currentCat) : ''))
+                .then(r => r.json())
+                .then(res => {
+                    let photos = [];
+                    if (res.code === 200 && res.data && res.data.length) {
+                        photos = res.data.map(p => ({
+                            url: p.imageUrl, caption: p.caption || '',
+                            date: p.takenAt || '', category: p.category || ''
+                        }));
+                    }
+                    const all = photos.length ? photos : staticImages;
+                    const filtered = currentCat ? all.filter(p => p.category === currentCat) : all;
+                    renderPhotos(filtered);
+                    loadCategories(all);
+                })
+                .catch(() => { renderPhotos(currentCat ? staticImages.filter(p => p.category === currentCat) : staticImages); loadCategories(staticImages); });
+        }
+
+        function renderPhotos(photos) {
+            const grid = document.getElementById('photo-grid');
+            if (!photos.length) { grid.innerHTML = '<div class="empty">暂无照片</div>'; return; }
+            grid.innerHTML = photos.map(p => `
+                <div class="photo-item" onclick="window.open('${p.url}', '_blank')">
+                    <img src="${p.url}" alt="${p.caption}" onerror="this.style.opacity='0.3'">
+                    <div class="photo-caption">${p.caption || ''}</div>
+                    ${p.date ? `<div class="photo-date">${p.date}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function loadCategories(photos) {
+            const cats = [...new Set(photos.map(p => p.category).filter(Boolean))];
+            const bar = document.getElementById('filter-bar');
+            let html = '<button class="' + (currentCat === '' ? 'active' : '') + '" data-cat="">全部</button>';
+            cats.forEach(c => {
+                html += `<button class="${currentCat === c ? 'active' : ''}" data-cat="${c}">${c}</button>`;
+            });
+            bar.innerHTML = html;
+            bar.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentCat = btn.dataset.cat;
+                    loadPhotos();
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadPhotos);
+    </script>
+</body>
+</html>

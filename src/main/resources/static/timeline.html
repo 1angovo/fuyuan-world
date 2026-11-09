@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成长时间轴 - 福元的世界</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑", sans-serif; }
+        .header-banner {
+            height: 200px; background: linear-gradient(to right,#fceabb,#f8b500);
+            background-image: url("images/fuyuan3.jpg"); background-size: cover;
+            background-position: center; display: flex; align-items: center; justify-content: center;
+        }
+        .banner-title { color: white; font-size: 26px; font-weight: bold; text-shadow: 0 2px 6px rgba(0,0,0,0.6); }
+        .navbar { background-color: #fceabb; padding: 15px 0; text-align: center; border-bottom: 1px solid #f8b500; }
+        .navbar a { text-decoration: none; color: #8b5a2b; margin: 0 15px; font-size: 15px; font-weight: 500; }
+        .navbar a:hover { color: #d97634; }
+        .main-content { background-color: #fff8e6; padding: 40px 10%; min-height: 500px; }
+        .section-title { text-align: center; color: #8b5a2b; font-size: 24px; margin-bottom: 40px; position: relative; }
+        .section-title::after { content: ""; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 60px; height: 3px; background-color: #f8b500; }
+
+        .timeline { position: relative; max-width: 700px; margin: 0 auto; padding-left: 30px; }
+        .timeline::before {
+            content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+            width: 3px; background: linear-gradient(to bottom, #f8b500, #fceabb);
+        }
+        .timeline-item { position: relative; margin-bottom: 30px; padding-left: 30px; }
+        .timeline-item::before {
+            content: ''; position: absolute; left: -27px; top: 6px;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: #f8b500; border: 3px solid #fff; box-shadow: 0 0 0 2px #f8b500;
+        }
+        .timeline-date { font-size: 14px; color: #d97634; font-weight: bold; margin-bottom: 4px; }
+        .timeline-content { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .timeline-content h3 { color: #8b5a2b; font-size: 17px; margin-bottom: 8px; }
+        .timeline-content p { color: #5d4037; line-height: 1.7; font-size: 14px; }
+        .timeline-content .tag {
+            display: inline-block; background: #fceabb; color: #8b5a2b;
+            padding: 2px 10px; border-radius: 10px; font-size: 12px; margin-bottom: 8px;
+        }
+        .empty { text-align: center; color: #a1887f; padding: 60px; }
+        .footer { background-color: #8b5a2b; color: white; text-align: center; padding: 15px 0; font-size: 14px; }
+        @media (max-width: 768px) {
+            .header-banner { height: 160px; }
+            .banner-title { font-size: 20px; }
+            .navbar { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; padding: 12px 10px; }
+            .navbar a { margin: 0; font-size: 13px; }
+            .main-content { padding: 20px 5%; }
+            .timeline { padding-left: 20px; }
+            .timeline-item { padding-left: 24px; }
+            .timeline-item::before { left: -17px; width: 14px; height: 14px; }
+            .timeline::before { left: 5px; }
+            .section-title { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header-banner"><h1 class="banner-title">福元的成长时间轴</h1></header>
+    <nav class="navbar">
+        <a href="index.html">首页</a>
+        <a href="diary.html">成长日记</a>
+        <a href="photo.html">照片相册</a>
+        <a href="timeline.html">时间轴</a>
+        <a href="message.html">留言板</a>
+    </nav>
+    <main class="main-content">
+        <h2 class="section-title">⏰ 重要时刻</h2>
+        <div class="timeline" id="timeline">加载中...</div>
+    </main>
+    <footer class="footer"><p>| 福元的世界 |</p></footer>
+    <script>
+        function loadTimeline() {
+            fetch('/api/diaries').then(r => r.json()).then(res => {
+                const box = document.getElementById('timeline');
+                if (res.code !== 200 || !res.data || !res.data.length) {
+                    box.innerHTML = '<div class="empty">暂无时间轴事件</div>'; return;
+                }
+                box.innerHTML = res.data.map(d => `
+                    <div class="timeline-item">
+                        ${d.eventDate ? `<div class="timeline-date">📅 ${d.eventDate}</div>` : ''}
+                        <div class="timeline-content">
+                            ${d.diaryType ? `<span class="tag">${d.diaryType}</span>` : ''}
+                            <h3>${d.title}</h3>
+                            <p>${d.content || ''}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }).catch(err => { document.getElementById('timeline').innerText = '加载失败'; console.error(err); });
+        }
+        document.addEventListener('DOMContentLoaded', loadTimeline);
+    </script>
+</body>
+</html>
