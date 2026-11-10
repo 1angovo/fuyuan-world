@@ -770,7 +770,7 @@ async function uploadFriendPhoto() {
         const r = await fetch('/api/photos/upload', { method: 'POST', body: fd });
         const json = await r.json();
         if (json.code !== 200) { alert('上传失败'); return; }
-        const imageUrl = json.data;
+        const imageUrl = json.data.url;
         const photo = {
             friendId: parseInt(fid),
             imageUrl,
