@@ -380,6 +380,40 @@
                 <span id="friendPhotoMsg" style="margin-left:10px;color:#2e7d32;font-size:13px;"></span>
                 <div id="friendPhotoList" style="margin-top:20px;"></div>
             </div>
+
+            <div id="editFriendModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center;">
+                <div style="background:#fff8e1;border-radius:14px;padding:22px;min-width:440px;max-width:520px;box-shadow:0 8px 28px rgba(0,0,0,0.2);">
+                    <h2 style="margin:0 0 16px;color:#8b5a2b;">✏️ 编辑朋友档案</h2>
+                    <input type="hidden" id="edit-fr-id">
+                    <input type="hidden" id="edit-fr-avatar">
+                    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                        <div id="edit-fr-avatar-preview" style="width:70px;height:70px;border-radius:50%;border:2px solid #ffb74d;background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:11px;color:#a1887f;">头像</div>
+                        <div>
+                            <input type="file" accept="image/*" onchange="previewEditFriendAvatar(this)" style="font-size:12px;">
+                            <div style="font-size:11px;color:#a1887f;margin-top:2px;">选本地图片直接更换头像</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>名字</label><input id="edit-fr-name"></div>
+                        <div class="form-group"><label>种类</label>
+                            <select id="edit-fr-species"><option value="猫咪">猫咪</option><option value="狗狗">狗狗</option><option value="其他">其他</option></select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>品种</label><input id="edit-fr-breed"></div>
+                        <div class="form-group"><label>性别</label>
+                            <select id="edit-fr-gender"><option value="公">公</option><option value="母">母</option></select>
+                        </div>
+                        <div class="form-group"><label>生日</label><input id="edit-fr-birthday" type="date"></div>
+                    </div>
+                    <div class="form-group"><label>性格</label><input id="edit-fr-personality"></div>
+                    <div class="form-group"><label>简介</label><textarea id="edit-fr-desc" rows="2"></textarea></div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;">
+                        <button class="btn btn-danger" onclick="closeEditFriend()" style="background:#e57373;">取消</button>
+                        <button class="btn btn-primary" onclick="saveEditFriend()">💾 保存</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -755,11 +789,17 @@ async function loadFriends() {
         box.innerHTML = list.map(f => `
             <div class="list-item">
                 <div class="list-item-header">
-                    <div>
-                        <span class="list-item-title">🐾 ${f.name}</span>
-                        <span class="list-item-meta">  ${f.species} · ${f.breed||'-'} · ${f.gender||'-'}</span>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <img src="${f.avatarUrl||'/images/richang1.jpg'}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #ffb74d;">
+                        <div>
+                            <span class="list-item-title">🐾 ${f.name}</span>
+                            <span class="list-item-meta">  ${f.species} · ${f.breed||'-'} · ${f.gender||'-'}</span>
+                        </div>
                     </div>
-                    <button class="btn btn-danger btn-sm" onclick="deleteFriend(${f.id})">🗑 删除</button>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-primary btn-sm" onclick='editFriend(${JSON.stringify(f).replace(/'/g,"&#39;")})'>✏️ 编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteFriend(${f.id})">🗑 删除</button>
+                    </div>
                 </div>
                 <div class="list-item-content">${f.description||'暂无介绍'}${f.birthday?' · 🎂 '+f.birthday:''}</div>
             </div>
@@ -774,6 +814,72 @@ async function deleteFriend(id) {
     if (!confirm('确定删除这位朋友（及其所有照片）？')) return;
     await fetch('/api/friends/' + id, { method: 'DELETE' });
     loadFriends();
+}
+
+let editAvatarFile = null;
+
+function editFriend(f) {
+    document.getElementById('edit-fr-id').value = f.id;
+    document.getElementById('edit-fr-name').value = f.name || '';
+    document.getElementById('edit-fr-species').value = f.species || '猫咪';
+    document.getElementById('edit-fr-breed').value = f.breed || '';
+    document.getElementById('edit-fr-gender').value = f.gender || '公';
+    document.getElementById('edit-fr-birthday').value = f.birthday || '';
+    document.getElementById('edit-fr-personality').value = f.personality || '';
+    document.getElementById('edit-fr-desc').value = f.description || '';
+    document.getElementById('edit-fr-avatar').value = f.avatarUrl || '';
+    document.getElementById('edit-fr-avatar-preview').innerHTML =
+        `<img src="${f.avatarUrl||'/images/richang1.jpg'}" style="width:100%;height:100%;object-fit:cover;">`;
+    editAvatarFile = null;
+    document.getElementById('editFriendModal').style.display = 'flex';
+}
+
+function closeEditFriend() {
+    document.getElementById('editFriendModal').style.display = 'none';
+    editAvatarFile = null;
+}
+
+function previewEditFriendAvatar(input) {
+    const file = input.files[0];
+    if (!file) return;
+    editAvatarFile = file;
+    document.getElementById('edit-fr-avatar-preview').innerHTML =
+        `<img src="${URL.createObjectURL(file)}" style="width:100%;height:100%;object-fit:cover;">`;
+}
+
+async function saveEditFriend() {
+    const id = parseInt(document.getElementById('edit-fr-id').value);
+    let avatarUrl = document.getElementById('edit-fr-avatar').value.trim();
+    if (editAvatarFile) {
+        const fd = new FormData();
+        fd.append('file', editAvatarFile);
+        try {
+            const r = await fetch('/api/photos/upload', { method: 'POST', body: fd });
+            const json = await r.json();
+            if (json.code === 200) { avatarUrl = json.data.url; }
+        } catch(e) { alert('头像上传失败'); return; }
+    }
+    const friend = {
+        name: document.getElementById('edit-fr-name').value.trim(),
+        species: document.getElementById('edit-fr-species').value,
+        breed: document.getElementById('edit-fr-breed').value.trim(),
+        gender: document.getElementById('edit-fr-gender').value,
+        birthday: document.getElementById('edit-fr-birthday').value || null,
+        avatarUrl: avatarUrl || '/images/richang1.jpg',
+        personality: document.getElementById('edit-fr-personality').value.trim(),
+        description: document.getElementById('edit-fr-desc').value.trim()
+    };
+    try {
+        const res = await fetch('/api/friends/' + id, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(friend)
+        });
+        const json = await res.json();
+        if (json.code === 200) {
+            closeEditFriend();
+            loadFriends();
+        } else { alert('保存失败'); }
+    } catch(e) { alert('保存失败'); }
 }
 
 async function loadFriendPhotos() {
