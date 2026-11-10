@@ -7,6 +7,7 @@ RUN mvn -B -DskipTests clean package
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
+VOLUME ["/app/uploads"]
 EXPOSE 8080
 ENV SPRING_PROFILES_ACTIVE=mysql
 ENTRYPOINT ["java", "-jar", "app.jar"]
