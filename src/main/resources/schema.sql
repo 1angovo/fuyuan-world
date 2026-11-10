@@ -79,3 +79,25 @@ INSERT INTO photo (pet_id, diary_id, image_url, caption, category, taken_at) SEL
 INSERT INTO admin_user (username, password_hash)
 SELECT 'admin', 'e10adc3949ba59abbe56e057f20f883e'
 WHERE NOT EXISTS (SELECT 1 FROM admin_user WHERE username = 'admin');
+
+CREATE TABLE IF NOT EXISTS friend (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    species VARCHAR(30),
+    breed VARCHAR(50),
+    gender VARCHAR(10),
+    birthday DATE,
+    personality VARCHAR(500),
+    description TEXT,
+    avatar_url VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS friend_photo (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    friend_id BIGINT,
+    image_url VARCHAR(255),
+    caption VARCHAR(255),
+    taken_at DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

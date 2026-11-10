@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>福元的朋友们 - 毛孩子档案</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑", sans-serif; }
+        .header-banner {
+            position: relative; height: 220px;
+            background: linear-gradient(to right, #fceabb, #f8b500);
+            background-image: url("images/fuyuan3.jpg");
+            background-size: cover; background-position: center;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .banner-title {
+            color: white; font-size: 28px; font-weight: bold;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.6); z-index: 1;
+        }
+        .navbar {
+            background-color: #fceabb; padding: 15px 0; text-align: center;
+            border-bottom: 1px solid #f8b500;
+        }
+        .navbar a {
+            text-decoration: none; color: #8b5a2b; margin: 0 15px;
+            font-size: 15px; font-weight: 500;
+        }
+        .navbar a:hover { color: #d97634; }
+        .main-content { background-color: #fff8e6; padding: 40px 10%; min-height: 500px; }
+        .section-title {
+            text-align: center; color: #8b5a2b; font-size: 24px; margin-bottom: 30px;
+            position: relative;
+        }
+        .section-title::after {
+            content: ""; position: absolute; bottom: -10px; left: 50%;
+            transform: translateX(-50%); width: 60px; height: 3px;
+            background-color: #f8b500;
+        }
+        .friend-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 24px; max-width: 1200px; margin: 0 auto;
+        }
+        .friend-card {
+            background: white; border-radius: 14px; overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: transform 0.25s, box-shadow 0.25s;
+            cursor: pointer;
+        }
+        .friend-card:hover {
+            transform: translateY(-6px); box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        .friend-avatar {
+            width: 100%; height: 220px; object-fit: cover;
+            background-color: #fceabb;
+        }
+        .friend-info { padding: 18px; }
+        .friend-info h3 { color: #8b5a2b; font-size: 20px; margin-bottom: 8px; }
+        .friend-meta { font-size: 13px; color: #a1887f; margin-bottom: 10px; }
+        .friend-meta span { margin-right: 10px; }
+        .friend-desc {
+            font-size: 14px; color: #5d4037; line-height: 1.6;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .empty-hint {
+            text-align: center; padding: 60px 20px; color: #a1887f;
+            grid-column: 1 / -1;
+        }
+        .empty-hint .emoji { font-size: 48px; margin-bottom: 15px; }
+
+        .friend-detail-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); z-index: 1000;
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .friend-detail-overlay.show { display: flex; }
+        .friend-detail {
+            background: #fff8e6; border-radius: 16px; max-width: 800px; width: 100%;
+            max-height: 90vh; overflow-y: auto; padding: 30px; position: relative;
+        }
+        .close-btn {
+            position: absolute; top: 15px; right: 20px; font-size: 24px;
+            background: none; border: none; cursor: pointer; color: #8b5a2b;
+        }
+        .detail-header { display: flex; gap: 24px; margin-bottom: 24px; flex-wrap: wrap; }
+        .detail-avatar {
+            width: 180px; height: 180px; border-radius: 14px;
+            object-fit: cover; flex-shrink: 0; background: #fceabb;
+        }
+        .detail-info { flex: 1; min-width: 220px; }
+        .detail-info h2 { color: #8b5a2b; font-size: 26px; margin-bottom: 12px; }
+        .detail-info .info-line { margin-bottom: 8px; color: #5d4037; font-size: 14px; }
+        .detail-info .info-line span { color: #8b5a2b; font-weight: bold; }
+        .detail-desc {
+            background: white; border-radius: 10px; padding: 18px;
+            color: #5d4037; line-height: 1.8; font-size: 14px; margin-bottom: 24px;
+        }
+        .photo-gallery-title {
+            color: #8b5a2b; font-size: 18px; margin-bottom: 15px; font-weight: bold;
+        }
+        .photo-gallery {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .photo-gallery img {
+            width: 100%; height: 140px; object-fit: cover; border-radius: 8px;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .photo-gallery img:hover { transform: scale(1.05); }
+        .photo-caption { font-size: 12px; color: #a1887f; text-align: center; margin-top: 4px; }
+
+        .footer {
+            background-color: #8b5a2b; color: white; text-align: center;
+            padding: 15px 0; font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .header-banner { height: 160px; }
+            .banner-title { font-size: 22px; }
+            .navbar { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; padding: 12px 10px; }
+            .navbar a { margin: 0; font-size: 13px; }
+            .main-content { padding: 25px 5%; }
+            .section-title { font-size: 20px; }
+            .friend-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+            .friend-avatar { height: 150px; }
+            .friend-info h3 { font-size: 16px; }
+            .detail-header { flex-direction: column; align-items: center; }
+            .detail-avatar { width: 140px; height: 140px; }
+            .detail-info { text-align: center; }
+            .photo-gallery { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+            .photo-gallery img { height: 100px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-banner">
+        <h1 class="banner-title">🐾 福元的朋友们 🐾</h1>
+    </div>
+    <nav class="navbar">
+        <a href="index.html">🐱 福元主页</a>
+        <a href="diary.html">📝 成长日记</a>
+        <a href="photo.html">🖼️ 照片相册</a>
+        <a href="friends.html">🐾 朋友们</a>
+        <a href="message.html">💬 留言板</a>
+    </nav>
+    <div class="main-content">
+        <h2 class="section-title">🐱 毛孩子小伙伴们</h2>
+        <div id="friendGrid" class="friend-grid">
+            <div class="empty-hint">
+                <div class="emoji">🐾</div>
+                <div>暂时还没有朋友来报道~</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailOverlay" class="friend-detail-overlay">
+        <div class="friend-detail">
+            <button class="close-btn" onclick="closeDetail()">✕</button>
+            <div class="detail-header">
+                <img id="detailAvatar" class="detail-avatar" src="" alt="">
+                <div class="detail-info">
+                    <h2 id="detailName">-</h2>
+                    <div class="info-line"><span>种类：</span><span id="detailSpecies">-</span></div>
+                    <div class="info-line"><span>品种：</span><span id="detailBreed">-</span></div>
+                    <div class="info-line"><span>性别：</span><span id="detailGender">-</span></div>
+                    <div class="info-line"><span>生日：</span><span id="detailBirthday">-</span></div>
+                    <div class="info-line"><span>性格：</span><span id="detailPersonality">-</span></div>
+                </div>
+            </div>
+            <div id="detailDesc" class="detail-desc"></div>
+            <h3 class="photo-gallery-title">📸 照片墙</h3>
+            <div id="detailPhotos" class="photo-gallery">
+                <div class="empty-hint" style="padding:20px;font-size:14px;">暂无照片</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">🐾 福元的世界 - 一个记录猫咪成长的温馨小站 🐾</div>
+
+    <script>
+        async function loadFriends() {
+            try {
+                const res = await fetch('/api/friends');
+                const json = await res.json();
+                const list = json.data || [];
+                const grid = document.getElementById('friendGrid');
+                if (list.length === 0) {
+                    grid.innerHTML = '<div class="empty-hint"><div class="emoji">🐾</div><div>暂时还没有朋友来报道~</div></div>';
+                    return;
+                }
+                grid.innerHTML = list.map(f => `
+                    <div class="friend-card" onclick="showDetail(${f.id})">
+                        <img class="friend-avatar" src="${f.avatarUrl || '/images/richang1.jpg'}" alt="${f.name}">
+                        <div class="friend-info">
+                            <h3>${f.name}</h3>
+                            <div class="friend-meta">
+                                <span>${f.species || '猫咪'}</span>
+                                <span>${f.breed || '-'}</span>
+                                <span>${f.gender || ''}</span>
+                            </div>
+                            <div class="friend-desc">${f.description || '暂无介绍'}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function showDetail(id) {
+            try {
+                const [fRes, pRes] = await Promise.all([
+                    fetch('/api/friends/' + id).then(r => r.json()),
+                    fetch('/api/friends/' + id + '/photos').then(r => r.json())
+                ]);
+                const f = fRes.data;
+                const photos = pRes.data || [];
+                document.getElementById('detailAvatar').src = f.avatarUrl || '/images/richang1.jpg';
+                document.getElementById('detailName').textContent = f.name;
+                document.getElementById('detailSpecies').textContent = f.species || '猫咪';
+                document.getElementById('detailBreed').textContent = f.breed || '-';
+                document.getElementById('detailGender').textContent = f.gender || '-';
+                document.getElementById('detailBirthday').textContent = f.birthday || '-';
+                document.getElementById('detailPersonality').textContent = f.personality || '-';
+                document.getElementById('detailDesc').textContent = f.description || '暂无介绍~';
+                const pg = document.getElementById('detailPhotos');
+                if (photos.length === 0) {
+                    pg.innerHTML = '<div class="empty-hint" style="padding:20px;font-size:14px;">暂无照片</div>';
+                } else {
+                    pg.innerHTML = photos.map(p => `
+                        <div>
+                            <img src="${p.imageUrl}" alt="${p.caption || ''}" onclick="window.open('${p.imageUrl}','_blank')">
+                            <div class="photo-caption">${p.caption || ''}</div>
+                        </div>
+                    `).join('');
+                }
+                document.getElementById('detailOverlay').classList.add('show');
+            } catch (e) { console.error(e); }
+        }
+
+        function closeDetail() {
+            document.getElementById('detailOverlay').classList.remove('show');
+        }
+
+        document.getElementById('detailOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeDetail();
+        });
+
+        loadFriends();
+    </script>
+</body>
+</html>

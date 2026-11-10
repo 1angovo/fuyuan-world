@@ -185,6 +185,7 @@
         <button data-tab="diary" onclick="switchTab('diary')">📖 日记管理</button>
         <button data-tab="photo" onclick="switchTab('photo')">📷 照片管理</button>
         <button data-tab="comment" onclick="switchTab('comment')">💌 留言审核</button>
+        <button data-tab="friend" onclick="switchTab('friend')">🐾 朋友们</button>
     </nav>
 
     <div class="tab-content">
@@ -315,6 +316,67 @@
             </div>
         </div>
 
+        <!-- ===== 朋友们 ===== -->
+        <div id="tab-friend" class="tab-panel">
+            <div class="card">
+                <h2>➕ 新增朋友</h2>
+                <div class="form-row">
+                    <div class="form-group"><label>名字</label><input id="fr-name" placeholder="例如：年糕"></div>
+                    <div class="form-group"><label>种类</label>
+                        <select id="fr-species">
+                            <option value="猫咪">猫咪</option>
+                            <option value="狗狗">狗狗</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>品种</label><input id="fr-breed" placeholder="金渐层"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>性别</label>
+                        <select id="fr-gender"><option value="公">公</option><option value="母">母</option></select>
+                    </div>
+                    <div class="form-group"><label>生日</label><input id="fr-birthday" type="date"></div>
+                    <div class="form-group"><label>头像 URL</label><input id="fr-avatar" placeholder="/images/xxx.jpg"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>性格</label><input id="fr-personality" placeholder="粘人、傲娇..."></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>简介</label><textarea id="fr-desc" rows="2"></textarea></div>
+                </div>
+                <button class="btn btn-primary" onclick="addFriend()">➕ 添加朋友</button>
+                <span id="friendMsg" style="margin-left:12px;color:#2e7d32;font-size:13px;"></span>
+            </div>
+
+            <div class="card">
+                <h2>🐾 朋友列表</h2>
+                <div id="friendList"></div>
+            </div>
+
+            <div class="card">
+                <h2>📸 朋友照片（选一个朋友上传）</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>选择朋友</label>
+                        <select id="photoFriend" onchange="loadFriendPhotos()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>照片说明</label>
+                        <input id="fp-caption" placeholder="例如：年糕和福元玩耍">
+                    </div>
+                    <div class="form-group">
+                        <label>日期</label>
+                        <input id="fp-date" type="date">
+                    </div>
+                </div>
+                <div class="upload-area" style="margin-top:10px;">
+                    <label for="friendPhotoFile">📁 选择照片上传</label>
+                    <input id="friendPhotoFile" type="file" accept="image/*" onchange="uploadFriendPhoto()">
+                </div>
+                <div id="friendPhotoList" style="margin-top:15px;"></div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -337,7 +399,7 @@ function doLogin() {
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             document.getElementById('welcomeUser').innerText = '👤 ' + res.data.username;
-            loadPet(); loadDiaries(); loadPhotos(); loadComments();
+            loadPet(); loadDiaries(); loadPhotos(); loadComments(); loadFriends();
         } else {
             document.getElementById('loginErr').innerText = res.msg || '登录失败';
         }
@@ -359,6 +421,7 @@ function switchTab(name) {
     if (name === 'diary') loadDiaries();
     if (name === 'photo') loadPhotos();
     if (name === 'comment') loadComments();
+    if (name === 'friend') loadFriends();
 }
 
 // ========== 档案 ==========
@@ -602,9 +665,134 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         document.getElementById('welcomeUser').innerText = '👤 admin';
-        loadPet(); loadDiaries(); loadPhotos(); loadComments();
+        loadPet(); loadDiaries(); loadPhotos(); loadComments(); loadFriends();
     }
 });
+
+// ========== 朋友管理 ==========
+async function addFriend() {
+    const name = document.getElementById('fr-name').value.trim();
+    if (!name) { alert('请输入名字'); return; }
+    const friend = {
+        name,
+        species: document.getElementById('fr-species').value,
+        breed: document.getElementById('fr-breed').value.trim(),
+        gender: document.getElementById('fr-gender').value,
+        birthday: document.getElementById('fr-birthday').value || null,
+        avatarUrl: document.getElementById('fr-avatar').value.trim() || '/images/richang1.jpg',
+        personality: document.getElementById('fr-personality').value.trim(),
+        description: document.getElementById('fr-desc').value.trim()
+    };
+    try {
+        const res = await fetch('/api/friends', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(friend)
+        });
+        const json = await res.json();
+        if (json.code === 200) {
+            ['fr-name','fr-breed','fr-avatar','fr-personality','fr-desc'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('fr-birthday').value = '';
+            document.getElementById('friendMsg').innerText = '✅ 添加成功！';
+            setTimeout(() => document.getElementById('friendMsg').innerText = '', 2500);
+            loadFriends();
+        }
+    } catch(e) { alert('添加失败'); }
+}
+
+async function loadFriends() {
+    try {
+        const res = await fetch('/api/friends');
+        const json = await res.json();
+        const list = json.data || [];
+        const box = document.getElementById('friendList');
+        const sel = document.getElementById('photoFriend');
+        if (!list.length) {
+            box.innerHTML = '<div class="empty">还没有朋友，快添加吧 🐾</div>';
+            sel.innerHTML = '<option value="">暂无朋友</option>';
+            document.getElementById('friendPhotoList').innerHTML = '';
+            return;
+        }
+        box.innerHTML = list.map(f => `
+            <div class="list-item">
+                <div class="list-item-header">
+                    <div>
+                        <span class="list-item-title">🐾 ${f.name}</span>
+                        <span class="list-item-meta">  ${f.species} · ${f.breed||'-'} · ${f.gender||'-'}</span>
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="deleteFriend(${f.id})">🗑 删除</button>
+                </div>
+                <div class="list-item-content">${f.description||'暂无介绍'}${f.birthday?' · 🎂 '+f.birthday:''}</div>
+            </div>
+        `).join('');
+        sel.innerHTML = list.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        sel.onchange = loadFriendPhotos;
+        loadFriendPhotos();
+    } catch(e) { console.error(e); }
+}
+
+async function deleteFriend(id) {
+    if (!confirm('确定删除这位朋友（及其所有照片）？')) return;
+    await fetch('/api/friends/' + id, { method: 'DELETE' });
+    loadFriends();
+}
+
+async function loadFriendPhotos() {
+    const fid = document.getElementById('photoFriend').value;
+    const box = document.getElementById('friendPhotoList');
+    if (!fid) { box.innerHTML = ''; return; }
+    try {
+        const res = await fetch('/api/friends/' + fid + '/photos');
+        const json = await res.json();
+        const photos = json.data || [];
+        if (!photos.length) { box.innerHTML = '<div class="empty">还没有照片</div>'; return; }
+        box.innerHTML = '<div class="photo-grid">' + photos.map(p => `
+            <div class="photo-item">
+                <img src="${p.imageUrl}" alt="${p.caption||''}">
+                <div class="photo-info">
+                    <div class="caption">${p.caption||''}</div>
+                    <div>${p.takenAt||''}</div>
+                    <button class="btn btn-danger btn-sm" style="margin-top:6px;padding:4px 10px;" onclick="deleteFriendPhoto(${p.id})">🗑 删除</button>
+                </div>
+            </div>
+        `).join('') + '</div>';
+    } catch(e) { console.error(e); }
+}
+
+async function uploadFriendPhoto() {
+    const fileInput = document.getElementById('friendPhotoFile');
+    const fid = document.getElementById('photoFriend').value;
+    if (!fid) { alert('请先选择朋友'); return; }
+    if (!fileInput.files.length) { alert('请选择照片'); return; }
+    const file = fileInput.files[0];
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+        const r = await fetch('/api/photos/upload', { method: 'POST', body: fd });
+        const json = await r.json();
+        if (json.code !== 200) { alert('上传失败'); return; }
+        const imageUrl = json.data;
+        const photo = {
+            friendId: parseInt(fid),
+            imageUrl,
+            caption: document.getElementById('fp-caption').value.trim(),
+            takenAt: document.getElementById('fp-date').value || null
+        };
+        await fetch('/api/friends/' + fid + '/photos', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(photo)
+        });
+        fileInput.value = '';
+        document.getElementById('fp-caption').value = '';
+        document.getElementById('fp-date').value = '';
+        loadFriendPhotos();
+    } catch(e) { alert('上传失败: ' + e.message); }
+}
+
+async function deleteFriendPhoto(id) {
+    if (!confirm('确定删除这张照片？')) return;
+    await fetch('/api/friends/photos/' + id, { method: 'DELETE' });
+    loadFriendPhotos();
+}
 </script>
 </body>
 </html>
