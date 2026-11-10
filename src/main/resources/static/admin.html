@@ -366,22 +366,16 @@
                         <label>选择朋友</label>
                         <select id="photoFriend" onchange="loadFriendPhotos()"></select>
                     </div>
-                    <div class="form-group">
-                        <label>照片说明</label>
-                        <input id="fp-caption" placeholder="例如：年糕和福元玩耍">
-                    </div>
-                    <div class="form-group">
-                        <label>日期</label>
-                        <input id="fp-date" type="date">
-                    </div>
                 </div>
                 <div class="upload-area" style="margin-top:10px;">
-                    <label for="friendPhotoFile">📁 点击选择朋友照片</label>
-                    <input id="friendPhotoFile" type="file" accept="image/*" onchange="uploadFriendPhoto()">
-                    <p>选择后自动上传 ✅（支持 JPG/PNG）</p>
-                    <span id="friendPhotoMsg" style="color:#2e7d32;font-size:13px;"></span>
+                    <label for="friendPhotoFile">📁 点击选择朋友照片（可多选）</label>
+                    <input id="friendPhotoFile" type="file" accept="image/*" multiple onchange="previewFriendPhotos(this)">
+                    <p>可一次选多张图片，选完后预览 → 点「开始上传」</p>
                 </div>
-                <div id="friendPhotoList" style="margin-top:15px;"></div>
+                <div id="friendPhotoPreview" style="margin:14px 0;"></div>
+                <button id="friendPhotoUploadBtn" class="btn btn-primary" onclick="uploadFriendPhotos()" style="display:none;margin-top:8px;">🚀 开始上传所有</button>
+                <span id="friendPhotoMsg" style="margin-left:10px;color:#2e7d32;font-size:13px;"></span>
+                <div id="friendPhotoList" style="margin-top:20px;"></div>
             </div>
         </div>
 
@@ -784,40 +778,65 @@ async function loadFriendPhotos() {
     } catch(e) { console.error(e); }
 }
 
-async function uploadFriendPhoto() {
-    const fileInput = document.getElementById('friendPhotoFile');
+let friendPhotoQueue = [];
+
+function previewFriendPhotos(input) {
+    const files = Array.from(input.files);
+    const fid = document.getElementById('photoFriend').value;
+    if (!fid) { alert('请先选择朋友'); input.value = ''; return; }
+    friendPhotoQueue = files.map(f => ({ file: f, caption: '', takenAt: '' }));
+    const box = document.getElementById('friendPhotoPreview');
+    if (!files.length) { box.innerHTML = ''; document.getElementById('friendPhotoUploadBtn').style.display = 'none'; return; }
+    box.innerHTML = files.map((f, i) => `
+        <div style="display:inline-block;vertical-align:top;margin:6px;border:1px solid #ffe0b2;border-radius:10px;padding:8px;background:#fff8e1;width:180px;">
+            <img src="${URL.createObjectURL(f)}" style="width:100%;height:120px;object-fit:cover;border-radius:6px;">
+            <input placeholder="说明（选填）" style="width:100%;margin-top:6px;padding:4px 6px;font-size:12px;border:1px solid #ffcc80;border-radius:4px;"
+                onchange="friendPhotoQueue[${i}].caption = this.value">
+            <input type="date" style="width:100%;margin-top:4px;padding:4px 6px;font-size:12px;border:1px solid #ffcc80;border-radius:4px;"
+                onchange="friendPhotoQueue[${i}].takenAt = this.value">
+        </div>
+    `).join('');
+    document.getElementById('friendPhotoUploadBtn').style.display = 'inline-block';
+    document.getElementById('friendPhotoMsg').innerText = '';
+}
+
+async function uploadFriendPhotos() {
     const fid = document.getElementById('photoFriend').value;
     const msg = document.getElementById('friendPhotoMsg');
     if (!fid) { alert('请先选择朋友'); return; }
-    if (!fileInput.files.length) { alert('请选择照片'); return; }
-    const file = fileInput.files[0];
-    const fd = new FormData();
-    fd.append('file', file);
+    if (!friendPhotoQueue.length) { alert('请选择照片'); return; }
+    let done = 0, total = friendPhotoQueue.length;
     msg.style.color = '#8b5a2b';
-    msg.innerText = '上传中...';
-    try {
-        const r = await fetch('/api/photos/upload', { method: 'POST', body: fd });
-        const json = await r.json();
-        if (json.code !== 200) { msg.style.color = '#e53935'; msg.innerText = '❌ 上传失败'; return; }
-        const imageUrl = json.data.url;
-        const photo = {
-            friendId: parseInt(fid),
-            imageUrl,
-            caption: document.getElementById('fp-caption').value.trim(),
-            takenAt: document.getElementById('fp-date').value || null
-        };
-        await fetch('/api/friends/' + fid + '/photos', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(photo)
-        });
-        fileInput.value = '';
-        document.getElementById('fp-caption').value = '';
-        document.getElementById('fp-date').value = '';
-        msg.style.color = '#2e7d32';
-        msg.innerText = '✅ 上传成功！';
-        setTimeout(() => { msg.innerText = ''; }, 2500);
-        loadFriendPhotos();
-    } catch(e) { msg.style.color = '#e53935'; msg.innerText = '❌ 上传失败: ' + e.message; }
+    msg.innerText = `上传中 0/${total}...`;
+    for (const item of friendPhotoQueue) {
+        try {
+            const fd = new FormData();
+            fd.append('file', item.file);
+            const r = await fetch('/api/photos/upload', { method: 'POST', body: fd });
+            const json = await r.json();
+            if (json.code !== 200) { continue; }
+            const photo = {
+                friendId: parseInt(fid),
+                imageUrl: json.data.url,
+                caption: item.caption.trim(),
+                takenAt: item.takenAt || null
+            };
+            await fetch('/api/friends/' + fid + '/photos', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(photo)
+            });
+            done++;
+            msg.innerText = `上传中 ${done}/${total}...`;
+        } catch(e) {}
+    }
+    friendPhotoQueue = [];
+    document.getElementById('friendPhotoFile').value = '';
+    document.getElementById('friendPhotoPreview').innerHTML = '';
+    document.getElementById('friendPhotoUploadBtn').style.display = 'none';
+    msg.style.color = '#2e7d32';
+    msg.innerText = `✅ 上传成功 ${done}/${total}！`;
+    setTimeout(() => { msg.innerText = ''; }, 3000);
+    loadFriendPhotos();
 }
 
 async function deleteFriendPhoto(id) {
