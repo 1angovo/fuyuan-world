@@ -337,11 +337,14 @@
                     </div>
                     <div class="form-group"><label>生日</label><input id="fr-birthday" type="date"></div>
                     <div class="form-group"><label>头像</label>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <input type="file" accept="image/*" onchange="uploadFriendAvatar(this)" style="font-size:12px;">
-                            <input type="hidden" id="fr-avatar" value="">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div id="fr-avatar-preview" style="width:60px;height:60px;border-radius:50%;border:2px dashed #ffb74d;background:#fff8e1;display:flex;align-items:center;justify-content:center;font-size:11px;color:#a1887f;overflow:hidden;">未选</div>
+                            <div>
+                                <input type="file" accept="image/*" id="fr-avatar-input" onchange="previewFriendAvatar(this)" style="font-size:12px;">
+                                <input type="hidden" id="fr-avatar" value="">
+                                <div id="fr-avatar-status" style="font-size:11px;color:#a1887f;margin-top:2px;"></div>
+                            </div>
                         </div>
-                        <div id="fr-avatar-preview" style="margin-top:6px;"></div>
                     </div>
                 </div>
                 <div class="form-row">
@@ -672,27 +675,39 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ========== 朋友管理 ==========
-async function uploadFriendAvatar(input) {
+let friendAvatarFile = null;
+
+function previewFriendAvatar(input) {
     const file = input.files[0];
     if (!file) return;
-    const fd = new FormData();
-    fd.append('file', file);
-    try {
-        const r = await fetch('/api/photos/upload', { method: 'POST', body: fd });
-        const json = await r.json();
-        if (json.code === 200) {
-            document.getElementById('fr-avatar').value = json.data.url;
-            document.getElementById('fr-avatar-preview').innerHTML =
-                `<img src="${json.data.url}" style="width:60px;height:60px;object-fit:cover;border-radius:50%;border:2px solid #f8b500;">`;
-        } else {
-            alert('上传失败');
-        }
-    } catch(e) { alert('上传失败: ' + e.message); }
+    friendAvatarFile = file;
+    document.getElementById('fr-avatar-preview').innerHTML =
+        `<img src="${URL.createObjectURL(file)}" style="width:100%;height:100%;object-fit:cover;">`;
+    document.getElementById('fr-avatar-status').innerText = '已选 · 点添加朋友时自动上传';
+    document.getElementById('fr-avatar-status').style.color = '#8b5a2b';
 }
 
 async function addFriend() {
     const name = document.getElementById('fr-name').value.trim();
     if (!name) { alert('请输入名字'); return; }
+
+    if (friendAvatarFile) {
+        const fd = new FormData();
+        fd.append('file', friendAvatarFile);
+        try {
+            document.getElementById('friendMsg').innerText = '正在上传头像...';
+            document.getElementById('friendMsg').style.color = '#8b5a2b';
+            const r = await fetch('/api/photos/upload', { method: 'POST', body: fd });
+            const json = await r.json();
+            if (json.code === 200) {
+                document.getElementById('fr-avatar').value = json.data.url;
+            } else {
+                alert('头像上传失败，请重试');
+                return;
+            }
+        } catch(e) { alert('头像上传失败: ' + e.message); return; }
+    }
+
     const friend = {
         name,
         species: document.getElementById('fr-species').value,
@@ -712,7 +727,12 @@ async function addFriend() {
         if (json.code === 200) {
             ['fr-name','fr-breed','fr-avatar','fr-personality','fr-desc'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('fr-birthday').value = '';
+            document.getElementById('fr-avatar-input').value = '';
+            document.getElementById('fr-avatar-preview').innerHTML = '未选';
+            document.getElementById('fr-avatar-status').innerText = '';
+            friendAvatarFile = null;
             document.getElementById('friendMsg').innerText = '✅ 添加成功！';
+            document.getElementById('friendMsg').style.color = '#2e7d32';
             setTimeout(() => document.getElementById('friendMsg').innerText = '', 2500);
             loadFriends();
         }
