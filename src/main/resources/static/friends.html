@@ -229,7 +229,7 @@
                     pg.innerHTML = photos.map(p => `
                         <div>
                             <img src="${p.imageUrl}" alt="${p.caption || ''}" onclick="window.open('${p.imageUrl}','_blank')">
-                            <div class="photo-caption">${p.caption || ''}</div>
+                            <div class="photo-caption">${p.caption || ''}${p.takenAt ? ' · ' + p.takenAt : ''}</div>
                         </div>
                     `).join('');
                 }
