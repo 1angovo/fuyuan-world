@@ -376,8 +376,10 @@
                     </div>
                 </div>
                 <div class="upload-area" style="margin-top:10px;">
-                    <label for="friendPhotoFile">📁 选择照片上传</label>
+                    <label for="friendPhotoFile">📁 点击选择朋友照片</label>
                     <input id="friendPhotoFile" type="file" accept="image/*" onchange="uploadFriendPhoto()">
+                    <p>选择后自动上传 ✅（支持 JPG/PNG）</p>
+                    <span id="friendPhotoMsg" style="color:#2e7d32;font-size:13px;"></span>
                 </div>
                 <div id="friendPhotoList" style="margin-top:15px;"></div>
             </div>
@@ -785,15 +787,18 @@ async function loadFriendPhotos() {
 async function uploadFriendPhoto() {
     const fileInput = document.getElementById('friendPhotoFile');
     const fid = document.getElementById('photoFriend').value;
+    const msg = document.getElementById('friendPhotoMsg');
     if (!fid) { alert('请先选择朋友'); return; }
     if (!fileInput.files.length) { alert('请选择照片'); return; }
     const file = fileInput.files[0];
     const fd = new FormData();
     fd.append('file', file);
+    msg.style.color = '#8b5a2b';
+    msg.innerText = '上传中...';
     try {
         const r = await fetch('/api/photos/upload', { method: 'POST', body: fd });
         const json = await r.json();
-        if (json.code !== 200) { alert('上传失败'); return; }
+        if (json.code !== 200) { msg.style.color = '#e53935'; msg.innerText = '❌ 上传失败'; return; }
         const imageUrl = json.data.url;
         const photo = {
             friendId: parseInt(fid),
@@ -808,8 +813,11 @@ async function uploadFriendPhoto() {
         fileInput.value = '';
         document.getElementById('fp-caption').value = '';
         document.getElementById('fp-date').value = '';
+        msg.style.color = '#2e7d32';
+        msg.innerText = '✅ 上传成功！';
+        setTimeout(() => { msg.innerText = ''; }, 2500);
         loadFriendPhotos();
-    } catch(e) { alert('上传失败: ' + e.message); }
+    } catch(e) { msg.style.color = '#e53935'; msg.innerText = '❌ 上传失败: ' + e.message; }
 }
 
 async function deleteFriendPhoto(id) {
