@@ -336,7 +336,13 @@
                         <select id="fr-gender"><option value="公">公</option><option value="母">母</option></select>
                     </div>
                     <div class="form-group"><label>生日</label><input id="fr-birthday" type="date"></div>
-                    <div class="form-group"><label>头像 URL</label><input id="fr-avatar" placeholder="/images/xxx.jpg"></div>
+                    <div class="form-group"><label>头像</label>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <input type="file" accept="image/*" onchange="uploadFriendAvatar(this)" style="font-size:12px;">
+                            <input type="hidden" id="fr-avatar" value="">
+                        </div>
+                        <div id="fr-avatar-preview" style="margin-top:6px;"></div>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label>性格</label><input id="fr-personality" placeholder="粘人、傲娇..."></div>
@@ -670,6 +676,24 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ========== 朋友管理 ==========
+async function uploadFriendAvatar(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+        const r = await fetch('/api/photos/upload', { method: 'POST', body: fd });
+        const json = await r.json();
+        if (json.code === 200) {
+            document.getElementById('fr-avatar').value = json.data.url;
+            document.getElementById('fr-avatar-preview').innerHTML =
+                `<img src="${json.data.url}" style="width:60px;height:60px;object-fit:cover;border-radius:50%;border:2px solid #f8b500;">`;
+        } else {
+            alert('上传失败');
+        }
+    } catch(e) { alert('上传失败: ' + e.message); }
+}
+
 async function addFriend() {
     const name = document.getElementById('fr-name').value.trim();
     if (!name) { alert('请输入名字'); return; }
